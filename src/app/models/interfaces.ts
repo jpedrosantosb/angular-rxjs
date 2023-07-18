@@ -44,3 +44,9 @@ export interface LivrosResultado {
   items: Item[];
   totalItems: number
 }
+
+export interface ListaLivrosInterface {
+  kind: string;
+  totalItems: string;
+  items: Item[];
+}

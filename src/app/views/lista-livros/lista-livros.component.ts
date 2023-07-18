@@ -13,11 +13,13 @@ const pausa = 1000;
   templateUrl: './lista-livros.component.html',
   styleUrls: ['./lista-livros.component.css']
 })
+
 export class ListaLivrosComponent {
 
   campoBusca = new FormControl()
   mensagemErro = ''
-  livrosResultado: LivrosResultado;
+  //livrosResultado: LivrosResultado;
+  quantidadeDeLivros: string = ''
 
   constructor(private service: LivroService) { }
 
@@ -36,26 +38,35 @@ export class ListaLivrosComponent {
 
   livrosEncontrados$ = this.campoBusca.valueChanges.pipe(
     debounceTime(pausa),
-    tap(() => {
-      console.log('Fluxo inicial de dados');
-    }),
-    filter(
-      (valorDigitado) => valorDigitado.length >= 3
-    ),
-    //distinctUntilChanged(),
-    switchMap(
-      (valorDigitado) => this.service.buscar(valorDigitado)
-    ),
-    map(resultado => this.livrosResultado = resultado),
+    tap(() => {console.log('Fluxo inicial de dados');}),
+    filter((valorDigitado) => valorDigitado.length >= 3),
+    distinctUntilChanged(),
+    switchMap((valorDigitado) => this.service.buscar(valorDigitado)),
+    tap(resultado => {this.quantidadeDeLivros = resultado.totalItems ? resultado.totalItems : '0'}),
     map(resultado => resultado.items ?? []),
-    tap(console.log),
-    map(items => this.livrosResultadoParaLivros(items)),
-    catchError(erro =>
-      { console.log(erro);
-        return throwError(() =>
-        new Error(this.mensagemErro = `Ops, ocorreu um erro! Recarregue a aplicação!`));
-      })
+    map((items) => this.livrosResultadoParaLivros(items)),
+    catchError(() => {
+      this.mensagemErro = "Erro ao realizar buscar, recarregar a página!";
+      return EMPTY;
+    })
   );
+
+  // livrosEncontrados$ = this.campoBusca.valueChanges.pipe(
+  //   debounceTime(pausa),
+  //   tap(() => {console.log('Fluxo inicial de dados');}),
+  //   filter((valorDigitado) => valorDigitado.length >= 3),
+  //   distinctUntilChanged(),
+  //   switchMap((valorDigitado) => this.service.buscar(valorDigitado)),
+  //   map(resultado => this.livrosResultado = resultado),
+  //   map(resultado => resultado.items ?? []),
+  //   map(items => this.livrosResultadoParaLivros(items)),
+  //   catchError(erro =>
+  //     { console.log(erro);
+  //       return throwError(() =>
+  //       new Error(this.mensagemErro = `Ops, ocorreu um erro! Recarregue a aplicação!`));
+  //     })
+  // );
+
 
   livrosResultadoParaLivros(items: Item[]): LivroVolumeInfo[] {
     return items.map(item => {
